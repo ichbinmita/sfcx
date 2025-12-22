@@ -6,7 +6,7 @@ import sqlite3
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
 
-BOT_TOKEN = ""
+BOT_TOKEN = "8524073894:AAEuYBUEPphqYmp-8RoCErFP3_jtDNM06jQ"
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
@@ -569,4 +569,5 @@ if __name__ == "__main__":
     print("Бот запускается...")
     print(f"Создатель: {CREATOR_USERNAME} (Telegram ID: {CREATOR_TELEGRAM_ID})")
     print("База данных готова")
+
     asyncio.run(main())
