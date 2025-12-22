@@ -157,6 +157,32 @@ async def cmd_start(message: types.Message):
 /top - топ-5 игроков по балансу
 /myid - показать ваш Telegram ID
     """)
+
+@dp.message(Command("bonus"))
+async def cmd_bonus(message: types.Message):
+    user_id = message.from_user.id
+    username = message.from_user.username
+    
+    # Получаем данные пользователя
+    user_data = get_user_by_telegram_id(user_id)
+    
+    # Если пользователь новый
+    if not user_data:
+        user_data = create_user(user_id, username)
+    
+    # Получаем текущий баланс
+    current_balance = user_data[3]
+    
+    # Начисляем бонус
+    bonus_amount = 100000
+    new_balance = current_balance + bonus_amount
+    
+    # Обновляем баланс
+    update_balance(user_id, new_balance)
+    
+    # Отправляем сообщение
+    await message.answer(f"🎁 Бонус начислен: +{bonus_amount:,}$")
+    await message.answer(f"💰 Новый баланс: {new_balance:,}$")
     
 @dp.message(Command("profile"))
 async def cmd_profile(message: types.Message):
@@ -571,3 +597,4 @@ if __name__ == "__main__":
     print("База данных готова")
 
     asyncio.run(main())
+
