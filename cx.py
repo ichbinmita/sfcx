@@ -313,7 +313,7 @@ async def cmd_balance(message: types.Message):
         balance = user_data[3]
     
     await message.answer(f"💰 Ваш баланс: {balance}$")
-    
+
 @dp.message(Command("top"))
 async def cmd_top(message: types.Message):
     """Топ-5 игроков по балансу"""
@@ -331,7 +331,7 @@ async def cmd_top(message: types.Message):
         await message.answer("📊 Пока нет игроков в рейтинге")
         return
     
-    top_text = "🏆 *ТОП-5 ИГРОКОВ ПО БАЛАНСУ*\n\n"
+    top_text = "🏆 <b>ТОП-5 ИГРОКОВ ПО БАЛАНСУ</b>\n\n"
     
     medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
     
@@ -345,13 +345,16 @@ async def cmd_top(message: types.Message):
         if len(username) > 15:
             username = username[:12] + "..."
         
+        # Экранируем HTML-символы
+        username = username.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        
         # Добавляем значок создателя если это он
         status_icon = "👑" if status == 'creator' else "👤"
         
         top_text += f"{medals[i]} {status_icon} {username}\n"
-        top_text += f"   ID: `{bot_id}` | 💰 {balance}$\n\n"
+        top_text += f"   ID: <code>{bot_id}</code> | 💰 {balance}$\n\n"
     
-    await message.answer(top_text, parse_mode="Markdown")
+    await message.answer(top_text, parse_mode="HTML")
 
 @dp.message(Command("myid"))
 async def cmd_myid(message: types.Message):
@@ -597,4 +600,5 @@ if __name__ == "__main__":
     print("База данных готова")
 
     asyncio.run(main())
+
 
