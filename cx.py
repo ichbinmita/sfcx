@@ -5,7 +5,6 @@ import logging
 import sqlite3
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
-from aiogram.filters import Text
 
 BOT_TOKEN = "8524073894:AAEuYBUEPphqYmp-8RoCErFP3_jtDNM06jQ"
 bot = Bot(token=BOT_TOKEN)
@@ -34,7 +33,7 @@ START_BALANCE = 10000
 
 # ID создателя
 CREATOR_USERNAME = "@cxpyuser"
-CREATOR_TELEGRAM_ID = 8258660794  # Замени на реальный ID создателя
+CREATOR_TELEGRAM_ID = 8258660794
 
 # Функции для работы с базой данных
 def get_user_by_telegram_id(user_id):
@@ -202,6 +201,15 @@ async def process_casino_command_without_slash(message: types.Message):
 async def handle_all_messages(message: types.Message):
     """Обработчик всех сообщений"""
     text = message.text.lower().strip()
+    
+    # Игнорируем сообщения без текста
+    if not text:
+        return
+    
+    # Проверяем, начинается ли сообщение с команды (со слэшем)
+    if text.startswith('/'):
+        # Если это команда со слэшем, пропускаем обычную обработку
+        return
     
     # Обработка команд без слэша
     if text in COMMAND_MAPPING:
