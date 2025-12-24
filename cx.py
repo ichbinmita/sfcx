@@ -5,6 +5,7 @@ import logging
 import sqlite3
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters.command import Command
+from aiogram.filters import Text
 
 BOT_TOKEN = "8524073894:AAEuYBUEPphqYmp-8RoCErFP3_jtDNM06jQ"
 bot = Bot(token=BOT_TOKEN)
@@ -127,6 +128,122 @@ def init_creator():
 # Инициализируем создателя при запуске
 init_creator()
 
+# Список команд для обычных пользователей (без слэша и на русском)
+COMMAND_MAPPING = {
+    # Основные команды
+    'старт': 'start',
+    'начать': 'start',
+    'профиль': 'profile',
+    'баланс': 'balance',
+    'бонус': 'bonus',
+    'топ': 'top',
+    'рейтинг': 'top',
+    'мойид': 'myid',
+    'мойайди': 'myid',
+    'игра': 'game',
+    'казино': 'casino',
+    # Специальные команды (только с слэшем)
+    'debug': 'debug',
+    'stats': 'stats',
+    'admin_help': 'admin_help',
+    'secret_bonus_admin': 'secret_bonus_admin'
+}
+
+async def process_command_without_slash(message: types.Message):
+    """Обработка команд без слэша"""
+    text = message.text.lower().strip()
+    
+    # Проверяем, является ли текст командой без слэша
+    if text in COMMAND_MAPPING:
+        command = COMMAND_MAPPING[text]
+        
+        # Перенаправляем на соответствующий обработчик
+        if command == 'start':
+            await cmd_start(message)
+        elif command == 'profile':
+            await cmd_profile(message)
+        elif command == 'balance':
+            await cmd_balance(message)
+        elif command == 'bonus':
+            await cmd_bonus(message)
+        elif command == 'top':
+            await cmd_top(message)
+        elif command == 'myid':
+            await cmd_myid(message)
+        elif command == 'game':
+            await message.answer("Для игры используйте формат: игра <сумма> <число> или /game <сумма> <число>")
+        elif command == 'casino':
+            await message.answer("Для казино используйте формат: казино <сумма> или /casino <сумма>")
+
+async def process_game_command_without_slash(message: types.Message):
+    """Обработка команды игры без слэша"""
+    text = message.text.lower()
+    if text.startswith('игра ') and len(text.split()) >= 3:
+        # Создаем сообщение с слэшем для обработки существующим обработчиком
+        parts = message.text.split()
+        # Меняем "игра" на "/game" и пересылаем
+        new_text = f"/game {' '.join(parts[1:])}"
+        message.text = new_text
+        await cmd_game(message)
+
+async def process_casino_command_without_slash(message: types.Message):
+    """Обработка команды казино без слэша"""
+    text = message.text.lower()
+    if text.startswith('казино ') and len(text.split()) >= 2:
+        # Создаем сообщение с слэшем для обработки существующим обработчиком
+        parts = message.text.split()
+        # Меняем "казино" на "/casino" и пересылаем
+        new_text = f"/casino {' '.join(parts[1:])}"
+        message.text = new_text
+        await cmd_casino(message)
+
+# Общий обработчик для всех сообщений
+@dp.message()
+async def handle_all_messages(message: types.Message):
+    """Обработчик всех сообщений"""
+    text = message.text.lower().strip()
+    
+    # Обработка команд без слэша
+    if text in COMMAND_MAPPING:
+        await process_command_without_slash(message)
+    elif text.startswith('игра '):
+        await process_game_command_without_slash(message)
+    elif text.startswith('казино '):
+        await process_casino_command_without_slash(message)
+    else:
+        # Если это не команда, показываем справку
+        await show_help(message)
+
+async def show_help(message: types.Message):
+    """Показать помощь по командам"""
+    help_text = """
+🎮 *ДОСТУПНЫЕ КОМАНДЫ* 🎮
+
+*Основные команды:*
+/start или *старт* или *начать* - Начать работу с ботом
+/profile или *профиль* - Посмотреть профиль
+/balance или *баланс* - Посмотреть баланс
+/bonus или *бонус* - Получить бонус
+
+*Игры:*
+/casino <сумма> или *казино <сумма>* - Сделать ставку в казино
+/game <сумма> <число> или *игра <сумма> <число>* - Угадать число (от 1 до 6)
+
+*Рейтинг:*
+/top или *топ* или *рейтинг* - Топ-5 игроков по балансу
+/myid или *мойид* или *мойайди* - Показать ваш ID
+
+*Для админа:*
+/debug - Техническая информация
+/stats - Статистика бота
+/admin_help - Помощь по админ командам
+/secret_bonus_admin - Секретный бонус
+
+📝 *Все команды можно вводить как с / так и без него!*
+    """
+    await message.answer(help_text, parse_mode="Markdown")
+
+# Оригинальные обработчики команд (остаются без изменений)
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
@@ -150,12 +267,13 @@ async def cmd_start(message: types.Message):
 ⭐ Статус: {user_data[5]}
 
 📜 Доступные команды:
-/profile - посмотреть профиль
-/balance - посмотреть баланс
-/casino <сумма> - сделать ставку
-/game <сумма> <число> - угадай число
-/top - топ-5 игроков по балансу
-/myid - показать ваш Telegram ID
+/profile или *профиль* - посмотреть профиль
+/balance или *баланс* - посмотреть баланс
+/casino <сумма> или *казино <сумма>* - сделать ставку
+/game <сумма> <число> или *игра <сумма> <число>* - угадай число
+/top или *топ* - топ-5 игроков по балансу
+/myid или *мойид* - показать ваш Telegram ID
+/bonus или *бонус* - получить бонус
     """)
 
 @dp.message(Command("bonus"))
@@ -389,7 +507,7 @@ async def cmd_game(message: types.Message):
     
     args = message.text.split()
     if len(args) < 3:
-        await message.answer("Используйте: /game <сумма> <число(от 1 до 6)>")
+        await message.answer("Используйте: /game <сумма> <число(от 1 до 6)> или игра <сумма> <число>")
         return
     
     try:
@@ -465,7 +583,7 @@ async def cmd_casino(message: types.Message):
     
     args = message.text.split()
     if len(args) < 2:
-        await message.answer("Используйте: /casino <сумма>")
+        await message.answer("Используйте: /casino <сумма> или казино <сумма>")
         return
     
     try:
@@ -532,7 +650,7 @@ async def cmd_debug(message: types.Message):
 📅 Дата регистрации: {time.strftime('%d.%m.%Y %H:%M', time.localtime(user_data[6]))}
         """)
     else:
-        await message.answer("Вы еще не зарегистрированы! Используйте /start")
+        await message.answer("Вы еще не зарегистрированы! Используйте /start или 'старт'")
 
 @dp.message(Command("stats"))
 async def cmd_stats(message: types.Message):
@@ -598,7 +716,6 @@ if __name__ == "__main__":
     print("Бот запускается...")
     print(f"Создатель: {CREATOR_USERNAME} (Telegram ID: {CREATOR_TELEGRAM_ID})")
     print("База данных готова")
-
+    print("Команды доступны как с / так и без него!")
+    
     asyncio.run(main())
-
-
