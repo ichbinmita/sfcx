@@ -141,11 +141,6 @@ COMMAND_MAPPING = {
     'мойайди': 'myid',
     'игра': 'game',
     'казино': 'casino',
-    # Специальные команды (только с слэшем)
-    'debug': 'debug',
-    'stats': 'stats',
-    'admin_help': 'admin_help',
-    'secret_bonus_admin': 'secret_bonus_admin'
 }
 
 async def process_command_without_slash(message: types.Message):
@@ -196,62 +191,7 @@ async def process_casino_command_without_slash(message: types.Message):
         message.text = new_text
         await cmd_casino(message)
 
-# Общий обработчик для всех сообщений
-@dp.message()
-async def handle_all_messages(message: types.Message):
-    """Обработчик всех сообщений"""
-    text = message.text.lower().strip()
-    
-    # Игнорируем сообщения без текста
-    if not text:
-        return
-    
-    # Проверяем, начинается ли сообщение с команды (со слэшем)
-    if text.startswith('/'):
-        # Если это команда со слэшем, пропускаем обычную обработку
-        return
-    
-    # Обработка команд без слэша
-    if text in COMMAND_MAPPING:
-        await process_command_without_slash(message)
-    elif text.startswith('игра '):
-        await process_game_command_without_slash(message)
-    elif text.startswith('казино '):
-        await process_casino_command_without_slash(message)
-    else:
-        # Если это не команда, показываем справку
-        await show_help(message)
-
-async def show_help(message: types.Message):
-    """Показать помощь по командам"""
-    help_text = """
-🎮 *ДОСТУПНЫЕ КОМАНДЫ* 🎮
-
-*Основные команды:*
-/start или *старт* или *начать* - Начать работу с ботом
-/profile или *профиль* - Посмотреть профиль
-/balance или *баланс* - Посмотреть баланс
-/bonus или *бонус* - Получить бонус
-
-*Игры:*
-/casino <сумма> или *казино <сумма>* - Сделать ставку в казино
-/game <сумма> <число> или *игра <сумма> <число>* - Угадать число (от 1 до 6)
-
-*Рейтинг:*
-/top или *топ* или *рейтинг* - Топ-5 игроков по балансу
-/myid или *мойид* или *мойайди* - Показать ваш ID
-
-*Для админа:*
-/debug - Техническая информация
-/stats - Статистика бота
-/admin_help - Помощь по админ командам
-/secret_bonus_admin - Секретный бонус
-
-📝 *Все команды можно вводить как с / так и без него!*
-    """
-    await message.answer(help_text, parse_mode="Markdown")
-
-# Оригинальные обработчики команд (остаются без изменений)
+# Сначала все декораторы команд, потом общий обработчик
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     user_id = message.from_user.id
@@ -275,13 +215,13 @@ async def cmd_start(message: types.Message):
 ⭐ Статус: {user_data[5]}
 
 📜 Доступные команды:
-/profile или *профиль* - посмотреть профиль
-/balance или *баланс* - посмотреть баланс
-/casino <сумма> или *казино <сумма>* - сделать ставку
-/game <сумма> <число> или *игра <сумма> <число>* - угадай число
-/top или *топ* - топ-5 игроков по балансу
-/myid или *мойид* - показать ваш Telegram ID
-/bonus или *бонус* - получить бонус
+/profile или профиль - посмотреть профиль
+/balance или баланс - посмотреть баланс
+/casino <сумма> или казино <сумма> - сделать ставку
+/game <сумма> <число> или игра <сумма> <число> - угадай число
+/top или топ - топ-5 игроков по балансу
+/myid или мойид - показать ваш Telegram ID
+/bonus или бонус - получить бонус
     """)
 
 @dp.message(Command("bonus"))
@@ -340,23 +280,23 @@ async def cmd_profile(message: types.Message):
     
     # Создаем красивый профиль
     profile_text = f"""
-📋 *ПРОФИЛЬ ИГРОКА*
+📋 ПРОФИЛЬ ИГРОКА
 
-👤 *ID в системе:* `{bot_id}`
-👑 *Статус:* {status}
-💰 *Баланс:* `{balance}$`
+👤 ID в системе: {bot_id}
+👑 Статус: {status}
+💰 Баланс: {balance}$
 {last_game_text}
-📅 *Дата регистрации:* {reg_date}
+📅 Дата регистрации: {reg_date}
 """
     
     # Добавляем Telegram данные
     if username:
-        profile_text += f"\n📱 *Telegram:* @{username}"
-    profile_text += f"\n🔢 *Telegram ID:* `{user_id}`"
+        profile_text += f"\n📱 Telegram: @{username}"
+    profile_text += f"\n🔢 Telegram ID: {user_id}"
     
     # Статус-индикатор
     if status == 'creator':
-        profile_text += "\n\n⭐ *Основатель cx.Arcade* ⭐"
+        profile_text += "\n\n⭐ Основатель cx.Arcade ⭐"
     else:
         # Определяем уровень игрока по балансу
         if balance >= 1000000:
@@ -368,9 +308,9 @@ async def cmd_profile(message: types.Message):
         elif balance >= 1000:
             level = "🎯 БОМЖ"
         
-        profile_text += f"\n\n🏅 *Уровень:* {level}"
+        profile_text += f"\n\n🏅 Уровень: {level}"
     
-    await message.answer(profile_text, parse_mode="Markdown")
+    await message.answer(profile_text)
 
 @dp.message(Command("secret_bonus_admin"))
 async def cmd_secret_bonus_admin(message: types.Message):
@@ -457,7 +397,7 @@ async def cmd_top(message: types.Message):
         await message.answer("📊 Пока нет игроков в рейтинге")
         return
     
-    top_text = "🏆 <b>ТОП-5 ИГРОКОВ ПО БАЛАНСУ</b>\n\n"
+    top_text = "🏆 ТОП-5 ИГРОКОВ ПО БАЛАНСУ\n\n"
     
     medals = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"]
     
@@ -471,16 +411,13 @@ async def cmd_top(message: types.Message):
         if len(username) > 15:
             username = username[:12] + "..."
         
-        # Экранируем HTML-символы
-        username = username.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        
         # Добавляем значок создателя если это он
         status_icon = "👑" if status == 'creator' else "👤"
         
         top_text += f"{medals[i]} {status_icon} {username}\n"
-        top_text += f"   ID: <code>{bot_id}</code> | 💰 {balance}$\n\n"
+        top_text += f"   ID: {bot_id} | 💰 {balance}$\n\n"
     
-    await message.answer(top_text, parse_mode="HTML")
+    await message.answer(top_text)
 
 @dp.message(Command("myid"))
 async def cmd_myid(message: types.Message):
@@ -491,12 +428,11 @@ async def cmd_myid(message: types.Message):
     if user_data:
         bot_id = user_data[0]
         await message.answer(
-            f"📱 Ваш Telegram ID: `{user_id}`\n"
-            f"📋 Ваш ID в системе: `{bot_id}`",
-            parse_mode="Markdown"
+            f"📱 Ваш Telegram ID: {user_id}\n"
+            f"📋 Ваш ID в системе: {bot_id}"
         )
     else:
-        await message.answer(f"📱 Ваш Telegram ID: `{user_id}`", parse_mode="Markdown")
+        await message.answer(f"📱 Ваш Telegram ID: {user_id}")
 
 @dp.message(Command("game"))
 async def cmd_game(message: types.Message):
@@ -691,29 +627,86 @@ async def cmd_admin_help(message: types.Message):
         return
     
     help_text = """
-👑 *КОМАНДЫ ДЛЯ СОЗДАТЕЛЯ*
+👑 КОМАНДЫ ДЛЯ СОЗДАТЕЛЯ
 
-📊 *Статистика:*
+📊 Статистика:
 /stats - статистика бота
 /top - топ-5 игроков
 
-📋 *Профиль:*
+📋 Профиль:
 /profile - ваш профиль
 /debug - техническая информация
 
-🎮 *Игры:*
+🎮 Игры:
 /casino <сумма> - игра в казино
 /game <сумма> <число> - угадай число
 
-💰 *Баланс:*
+💰 Баланс:
 /balance - ваш баланс
 /secret_bonus_admin money - получить 1.000.000$ (только создатель)
 
-📱 *Информация:*
+📱 Информация:
 /myid - ваш ID
     """
     
-    await message.answer(help_text, parse_mode="Markdown")
+    await message.answer(help_text)
+
+# Общий обработчик для всех сообщений без слэша (должен быть ПОСЛЕ всех командных обработчиков)
+@dp.message()
+async def handle_all_messages(message: types.Message):
+    """Обработчик всех сообщений без слэша"""
+    text = message.text.lower().strip() if message.text else ""
+    
+    # Игнорируем сообщения без текста
+    if not text:
+        return
+    
+    # Пропускаем сообщения, которые начинаются с /
+    if text.startswith('/'):
+        # Показываем помощь для неизвестных команд
+        if text not in ['/start', '/profile', '/balance', '/bonus', '/top', '/myid', '/game', '/casino', '/debug', '/stats', '/admin_help', '/secret_bonus_admin']:
+            await show_help(message)
+        return
+    
+    # Обработка команд без слэша
+    if text in COMMAND_MAPPING:
+        await process_command_without_slash(message)
+    elif text.startswith('игра '):
+        await process_game_command_without_slash(message)
+    elif text.startswith('казино '):
+        await process_casino_command_without_slash(message)
+    else:
+        # Если это не команда, показываем справку
+        await show_help(message)
+
+async def show_help(message: types.Message):
+    """Показать помощь по командам"""
+    help_text = """
+🎮 ДОСТУПНЫЕ КОМАНДЫ 🎮
+
+Основные команды:
+/start или старт или начать - Начать работу с ботом
+/profile или профиль - Посмотреть профиль
+/balance или баланс - Посмотреть баланс
+/bonus или бонус - Получить бонус
+
+Игры:
+/casino <сумма> или казино <сумма> - Сделать ставку в казино
+/game <сумма> <число> или игра <сумма> <число> - Угадать число (от 1 до 6)
+
+Рейтинг:
+/top или топ или рейтинг - Топ-5 игроков по балансу
+/myid или мойид или мойайди - Показать ваш ID
+
+Для админа:
+/debug - Техническая информация
+/stats - Статистика бота
+/admin_help - Помощь по админ командам
+/secret_bonus_admin - Секретный бонус
+
+📝 Все команды можно вводить как с / так и без него!
+    """
+    await message.answer(help_text)
 
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
